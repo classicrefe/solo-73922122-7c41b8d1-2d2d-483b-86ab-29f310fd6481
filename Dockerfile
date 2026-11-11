@@ -8,6 +8,12 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
+COPY tools ./tools
+
+# 演示邮件夹具构建阶段：生成 6 封覆盖多附件/无 CSV/坏行/重复场景的邮件
+FROM base AS mailbox-seed
+COPY demo ./demo
+RUN mkdir -p /mailbox && python -m tools.make_fixtures --out /mailbox
 
 FROM base AS test
 COPY requirements-dev.txt .

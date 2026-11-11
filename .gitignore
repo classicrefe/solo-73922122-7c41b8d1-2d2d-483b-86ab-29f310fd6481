@@ -4,3 +4,8 @@ __pycache__/
 .pytest_cache/
 *.egg-info/
 .DS_Store
+# 本地运行演示产生的 SQLite 与 WAL 文件
+/data/
+*.db
+*.db-wal
+*.db-shm

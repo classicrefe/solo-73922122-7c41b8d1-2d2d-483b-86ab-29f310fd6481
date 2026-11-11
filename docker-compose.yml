@@ -1,11 +1,63 @@
 services:
-  web:
+  # 本地 IMAP 演示源：纯标准库实现，无需外部邮箱账号。
+  # 默认加载 6 封演示邮件；设置 IMAPD_DROP_UID=3 可演示取信中途断线。
+  imap-server:
+    build:
+      context: .
+      target: mailbox-seed
+    image: lab-imap-demo:latest
+    command:
+      - "python"
+      - "-m"
+      - "tools.imap_server"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "3143"
+      - "--mail-dir"
+      - "/mailbox"
+    environment:
+      IMAPD_HOST: "0.0.0.0"
+      IMAPD_PORT: "3143"
+      IMAPD_MAIL_DIR: "/mailbox"
+      IMAPD_UIDVALIDITY: "1700000000"
+      IMAPD_USER: "lab"
+      IMAPD_PASSWORD: "labpass"
+      IMAPD_MAILBOX: "INBOX"
+      # 断线演示：取消下一行注释后，FETCH UID 3 时会中途断开一次 TCP
+      # IMAPD_DROP_UID: "3"
+    volumes:
+      - mailbox-data:/mailbox
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket,sys; s=socket.socket(); sys.exit(0 if s.connect_ex(('127.0.0.1',3143))==0 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # API 进程 A 与 B：两个独立 uvicorn 进程，共享同一个 SQLite 文件与
+  # 同一套 IMAP 环境配置，用于验证并发采集互斥、不漏信、不重复入库。
+  api-a:
     build:
       context: .
       target: runtime
     image: lab-reconcile-api:latest
     ports:
       - "8000:8000"
+    environment: &api_env
+      COLLECT_DB_PATH: "/data/collect.db"
+      IMAP_HOST: "imap-server"
+      IMAP_PORT: "3143"
+      IMAP_USERNAME: "lab"
+      IMAP_PASSWORD: "labpass"
+      IMAP_MAILBOX: "INBOX"
+      IMAP_USE_SSL: "false"
+      IMAP_CONNECT_TIMEOUT: "15"
+      IMAP_BATCH_MAX_MESSAGES: "200"
+    volumes:
+      - collect-data:/data
+    depends_on:
+      imap-server:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"]
@@ -13,6 +65,22 @@ services:
       timeout: 5s
       retries: 3
       start_period: 5s
+
+  api-b:
+    build:
+      context: .
+      target: runtime
+    image: lab-reconcile-api:latest
+    # 宿主机可通过 8010 访问进程 B，用于手动验证两进程并发采集互斥
+    ports:
+      - "8010:8000"
+    environment: *api_env
+    volumes:
+      - collect-data:/data
+    depends_on:
+      imap-server:
+        condition: service_healthy
+    restart: unless-stopped
 
   # 只在显式启用 test profile 时运行：
   # docker compose --profile test run --rm tests
@@ -22,4 +90,10 @@ services:
       context: .
       target: test
     image: lab-reconcile-api-test:latest
+    environment:
+      COLLECT_DB_PATH: "/tmp/test-collect.db"
     command: ["pytest", "-q"]
+
+volumes:
+  collect-data:
+  mailbox-data:
