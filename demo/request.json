@@ -1,0 +1,20 @@
+{
+  "tolerance_seconds": 60,
+  "plan_rows": [
+    {"row_id": "P1", "sample_no": "S-001", "well_position": "A01", "analyte": "铅Pb", "planned_at": 1000},
+    {"row_id": "P2", "sample_no": "S-002", "well_position": "A01", "analyte": "铅Pb", "planned_at": 2000},
+    {"row_id": "P3", "sample_no": "S-003", "well_position": "B02", "analyte": "镉Cd", "planned_at": 1000},
+    {"row_id": "P4", "sample_no": "S-004", "well_position": "B02", "analyte": "镉Cd", "planned_at": 1000},
+    {"row_id": "P5", "sample_no": "S-005", "well_position": "C03", "analyte": "汞Hg", "planned_at": 1000},
+    {"row_id": "P6", "sample_no": "S-006", "well_position": "D04", "analyte": "砷As", "planned_at": 1000}
+  ],
+  "result_rows": [
+    {"result_id": "R1", "well_position": "A01", "analyte": "铅Pb", "measured_at": 1000, "measured_value": 0.12},
+    {"result_id": "R2", "well_position": "A01", "analyte": "铅Pb", "measured_at": 2000, "measured_value": 0.15},
+    {"result_id": "R3", "well_position": "B02", "analyte": "镉Cd", "measured_at": 1000, "measured_value": 0.05},
+    {"result_id": "R4", "well_position": "B02", "analyte": "镉Cd", "measured_at": 1000, "measured_value": 0.07},
+    {"result_id": "R5", "well_position": "C03", "analyte": "汞Hg", "measured_at": 2000, "measured_value": "未检出"},
+    {"result_id": "R6", "well_position": "D04", "analyte": "砷As", "measured_at": 1050, "measured_value": 1.1},
+    {"result_id": "R7", "well_position": "D04", "analyte": "砷As", "measured_at": 1060, "measured_value": 0.9}
+  ]
+}

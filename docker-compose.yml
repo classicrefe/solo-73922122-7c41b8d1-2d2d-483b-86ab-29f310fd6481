@@ -1,0 +1,25 @@
+services:
+  web:
+    build:
+      context: .
+      target: runtime
+    image: lab-reconcile-api:latest
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # 只在显式启用 test profile 时运行：
+  # docker compose --profile test run --rm tests
+  tests:
+    profiles: ["test"]
+    build:
+      context: .
+      target: test
+    image: lab-reconcile-api-test:latest
+    command: ["pytest", "-q"]
